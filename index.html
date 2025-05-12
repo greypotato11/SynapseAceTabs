@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SynapseAce Tabs</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #1e1e1e;
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .tab-bar {
+      display: flex;
+      background-color: #2e2e2e;
+      padding: 0;
+      align-items: center;
+      margin-bottom: 0; /* No space below the tabs */
+    }
+
+    .tab {
+      background-color: rgb(104, 104, 104); /* Unselected tab color */
+      padding: 2px 8px; /* Adjusted padding for unselected tabs */
+      margin: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      width: 65px; /* Constant tab width */
+      height: 18px; /* Constant tab height */
+      font-size: 12px; /* Slightly smaller font */
+      color: #ccc;
+      user-select: none;
+      /* No transition (no tweens) */
+    }
+
+    .tab.active {
+      background-color: rgb(105, 105, 105);
+      color: white;
+    }
+
+    .tab-close {
+      margin-left: 4px; /* Shrinked the close button's margin */
+      color: #bbb;
+      cursor: pointer;
+    }
+
+    .tab-close:hover {
+      color: red;
+    }
+
+    .add-tab-button {
+      padding: 0;
+      font-size: 16px;
+      background-color: #3e3e3e;
+      color: white;
+      border: 1px solid rgb(139, 139, 139); /* Added 1px border with color */
+      width: 15px; /* Set width */
+      height: 15px; /* Set height */
+      cursor: pointer;
+      margin-left: 12px; /* Slightly separated the add tab button */
+      display: flex;
+      align-items: center;
+      justify-content: center; /* Center the "+" symbol */
+      text-align: center;
+      font-size: 14px; /* Adjust the font size of the "+" symbol */
+    }
+
+    .add-tab-button:hover {
+      background-color: #5a5a5a;
+    }
+
+    .content-container {
+      height: calc(100vh - 20px); /* Adjust height to fit perfectly below tabs */
+      margin-top: 0; /* Removed extra space above content */
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="tab-bar" id="tabs-container">
+    <!-- Tabs will be injected here -->
+    <button class="add-tab-button" onclick="addTab()">＋</button>
+  </div>
+
+  <div class="content-container" id="content-container">
+    <iframe id="content-frame" src="https://greypotato11.github.io/SynapseAce/"></iframe>
+  </div>
+
+  <script>
+    let tabCount = 0;
+    const tabsContainer = document.getElementById('tabs-container');
+    const contentFrame = document.getElementById('content-frame');
+
+    function addTab(name = `Script ${tabCount + 1}`) {
+      tabCount++;
+      const tabId = `tab-${tabCount}`;
+      const tabElement = document.createElement('div');
+      tabElement.className = 'tab';
+      tabElement.id = tabId;
+      tabElement.contentEditable = false;
+      tabElement.innerText = name;
+
+      const closeButton = document.createElement('span');
+      closeButton.className = 'tab-close';
+      closeButton.innerText = '×';
+      closeButton.onclick = (e) => {
+        e.stopPropagation();
+        removeTab(tabId);
+      };
+
+      tabElement.appendChild(closeButton);
+      tabElement.onclick = () => switchTab(tabId);
+
+      tabElement.ondblclick = () => {
+        tabElement.contentEditable = true;
+        tabElement.focus();
+        document.execCommand('selectAll', false, null);
+        // Ensure the close button stays visible during editing
+        closeButton.style.visibility = 'visible';  // Always visible
+      };
+
+      tabElement.onblur = () => {
+        tabElement.contentEditable = false;
+      };
+
+      const addButton = tabsContainer.querySelector('.add-tab-button');
+      tabsContainer.insertBefore(tabElement, addButton);
+
+      switchTab(tabId);
+    }
+
+    function removeTab(tabId) {
+      const tab = document.getElementById(tabId);
+      const wasActive = tab.classList.contains('active');
+      tab.remove();
+
+      if (wasActive) {
+        const remainingTabs = tabsContainer.querySelectorAll('.tab');
+        if (remainingTabs.length > 0) {
+          switchTab(remainingTabs[0].id);
+        } else {
+          contentFrame.src = 'about:blank';
+        }
+      }
+    }
+
+    function switchTab(tabId) {
+      const tabs = tabsContainer.querySelectorAll('.tab');
+      tabs.forEach(tab => tab.classList.remove('active'));
+
+      const tab = document.getElementById(tabId);
+      if (tab) {
+        tab.classList.add('active');
+        contentFrame.src = 'https://greypotato11.github.io/SynapseAce/';
+      }
+    }
+
+    // Add one tab on page load for flair
+    addTab();
+  </script>
+</body>
+</html>
