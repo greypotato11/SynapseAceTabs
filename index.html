@@ -15,25 +15,24 @@
 
     .tab-bar {
       display: flex;
-      background-color: #333333; /* Corrected the tab holder background to #333333 */
+      background-color: #333333; /* Updated tab holder background */
       padding: 0;
       align-items: center;
-      margin-bottom: 0; /* No space below the tabs */
+      margin-bottom: 0;
     }
 
     .tab {
       background-color: rgb(104, 104, 104); /* Unselected tab color */
-      padding: 2px 8px; /* Adjusted padding for unselected tabs */
+      padding: 2px 8px;
       margin: 0;
       cursor: pointer;
       display: flex;
       align-items: center;
-      width: 65px; /* Constant tab width */
-      height: 18px; /* Constant tab height */
-      font-size: 12px; /* Slightly smaller font */
+      width: 65px;
+      height: 18px;
+      font-size: 12px;
       color: #ccc;
       user-select: none;
-      /* No transition (no tweens) */
     }
 
     .tab.active {
@@ -42,7 +41,7 @@
     }
 
     .tab-close {
-      margin-left: 4px; /* Shrinked the close button's margin */
+      margin-left: 4px;
       color: #bbb;
       cursor: pointer;
     }
@@ -56,16 +55,16 @@
       font-size: 16px;
       background-color: #3e3e3e;
       color: white;
-      border: 1px solid rgb(139, 139, 139); /* Added 1px border with color */
-      width: 15px; /* Set width */
-      height: 15px; /* Set height */
+      border: 1px solid rgb(139, 139, 139);
+      width: 15px;
+      height: 15px;
       cursor: pointer;
-      margin-left: 12px; /* Slightly separated the add tab button */
+      margin-left: 12px;
       display: flex;
       align-items: center;
-      justify-content: center; /* Center the "+" symbol */
+      justify-content: center;
       text-align: center;
-      font-size: 14px; /* Adjust the font size of the "+" symbol */
+      font-size: 14px;
     }
 
     .add-tab-button:hover {
@@ -73,8 +72,8 @@
     }
 
     .content-container {
-      height: calc(100vh - 20px); /* Adjust height to fit perfectly below tabs */
-      margin-top: 0; /* Removed extra space above content */
+      height: calc(100vh - 20px);
+      margin-top: 0;
     }
 
     iframe {
@@ -87,7 +86,6 @@
 <body>
 
   <div class="tab-bar" id="tabs-container">
-    <!-- Tabs will be injected here -->
     <button class="add-tab-button" onclick="addTab()">＋</button>
   </div>
 
@@ -99,6 +97,9 @@
     let tabCount = 0;
     const tabsContainer = document.getElementById('tabs-container');
     const contentFrame = document.getElementById('content-frame');
+
+    // Store the content of each tab (in case we need to switch back without clearing)
+    let tabContents = {};
 
     function addTab(name = `Script ${tabCount + 1}`) {
       tabCount++;
@@ -124,8 +125,7 @@
         tabElement.contentEditable = true;
         tabElement.focus();
         document.execCommand('selectAll', false, null);
-        // Ensure the close button stays visible during editing
-        closeButton.style.visibility = 'visible';  // Always visible
+        closeButton.style.visibility = 'visible'; // Keep the close button visible
       };
 
       tabElement.onblur = () => {
@@ -135,7 +135,7 @@
       const addButton = tabsContainer.querySelector('.add-tab-button');
       tabsContainer.insertBefore(tabElement, addButton);
 
-      switchTab(tabId);
+      switchTab(tabId); // Switch to the newly created tab
     }
 
     function removeTab(tabId) {
@@ -143,12 +143,15 @@
       const wasActive = tab.classList.contains('active');
       tab.remove();
 
+      // Remove the stored content for the tab if it was removed
+      delete tabContents[tabId];
+
       if (wasActive) {
         const remainingTabs = tabsContainer.querySelectorAll('.tab');
         if (remainingTabs.length > 0) {
           switchTab(remainingTabs[0].id);
         } else {
-          contentFrame.src = 'about:blank';
+          contentFrame.src = 'about:blank'; // Clear content if no tabs are left
         }
       }
     }
@@ -160,9 +163,27 @@
       const tab = document.getElementById(tabId);
       if (tab) {
         tab.classList.add('active');
-        contentFrame.src = 'https://greypotato11.github.io/SynapseAce/';
+        const tabName = tab.innerText;
+
+        // Check if we already have stored content for the tab
+        if (tabContents[tabId]) {
+          contentFrame.contentWindow.document.body.innerHTML = tabContents[tabId];
+        } else {
+          // Load new content for this tab (you can adjust this URL as needed)
+          contentFrame.src = 'https://greypotato11.github.io/SynapseAce/';
+        }
       }
     }
+
+    // Save the content of the iframe before switching tabs
+    contentFrame.onload = () => {
+      contentFrame.contentWindow.addEventListener('beforeunload', () => {
+        const activeTabId = document.querySelector('.tab.active').id;
+        if (activeTabId) {
+          tabContents[activeTabId] = contentFrame.contentWindow.document.body.innerHTML;
+        }
+      });
+    };
 
     // Add one tab on page load for flair
     addTab();
