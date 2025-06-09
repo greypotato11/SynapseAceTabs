@@ -15,14 +15,14 @@
 
     .tab-bar {
       display: flex;
-      background-color: #333333; /* Updated tab holder background */
+      background-color: #333333;
       padding: 0;
       align-items: center;
       margin-bottom: 0;
     }
 
     .tab {
-      background-color: rgb(104, 104, 104); /* Unselected tab color */
+      background-color: rgb(104, 104, 104);
       padding: 2px 8px;
       margin: 0;
       cursor: pointer;
@@ -74,12 +74,16 @@
     .content-container {
       height: calc(100vh - 20px);
       margin-top: 0;
+      position: relative;
     }
 
     iframe {
       width: 100%;
       height: 100%;
       border: none;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
   </style>
 </head>
@@ -90,20 +94,20 @@
   </div>
 
   <div class="content-container" id="content-container">
-    <iframe id="content-frame" src="https://greypotato11.github.io/SynapseAce/"></iframe>
+    <!-- iframes will go here -->
   </div>
 
   <script>
     let tabCount = 0;
     const tabsContainer = document.getElementById('tabs-container');
-    const contentFrame = document.getElementById('content-frame');
-
-    // Store the content of each tab (in case we need to switch back without clearing)
-    let tabContents = {};
+    const contentContainer = document.getElementById('content-container');
+    let currentTabId = null;
 
     function addTab(name = `Script ${tabCount + 1}`) {
       tabCount++;
       const tabId = `tab-${tabCount}`;
+
+      // Create tab element
       const tabElement = document.createElement('div');
       tabElement.className = 'tab';
       tabElement.id = tabId;
@@ -125,7 +129,6 @@
         tabElement.contentEditable = true;
         tabElement.focus();
         document.execCommand('selectAll', false, null);
-        closeButton.style.visibility = 'visible'; // Keep the close button visible
       };
 
       tabElement.onblur = () => {
@@ -135,23 +138,28 @@
       const addButton = tabsContainer.querySelector('.add-tab-button');
       tabsContainer.insertBefore(tabElement, addButton);
 
-      switchTab(tabId); // Switch to the newly created tab
+      // Create the iframe for the tab
+      const iframe = document.createElement('iframe');
+      iframe.src = 'https://greypotato11.github.io/SynapseAce/';
+      iframe.id = `iframe-${tabId}`;
+      iframe.style.display = 'none';
+      contentContainer.appendChild(iframe);
+
+      switchTab(tabId);
     }
 
     function removeTab(tabId) {
       const tab = document.getElementById(tabId);
+      const iframe = document.getElementById(`iframe-${tabId}`);
       const wasActive = tab.classList.contains('active');
-      tab.remove();
 
-      // Remove the stored content for the tab if it was removed
-      delete tabContents[tabId];
+      if (tab) tab.remove();
+      if (iframe) iframe.remove();
 
       if (wasActive) {
         const remainingTabs = tabsContainer.querySelectorAll('.tab');
         if (remainingTabs.length > 0) {
           switchTab(remainingTabs[0].id);
-        } else {
-          contentFrame.src = 'about:blank'; // Clear content if no tabs are left
         }
       }
     }
@@ -160,33 +168,21 @@
       const tabs = tabsContainer.querySelectorAll('.tab');
       tabs.forEach(tab => tab.classList.remove('active'));
 
-      const tab = document.getElementById(tabId);
-      if (tab) {
-        tab.classList.add('active');
-        const tabName = tab.innerText;
+      const iframes = contentContainer.querySelectorAll('iframe');
+      iframes.forEach(frame => frame.style.display = 'none');
 
-        // Check if we already have stored content for the tab
-        if (tabContents[tabId]) {
-          contentFrame.contentWindow.document.body.innerHTML = tabContents[tabId];
-        } else {
-          // Load new content for this tab (you can adjust this URL as needed)
-          contentFrame.src = 'https://greypotato11.github.io/SynapseAce/';
-        }
+      const selectedTab = document.getElementById(tabId);
+      const selectedIframe = document.getElementById(`iframe-${tabId}`);
+      if (selectedTab && selectedIframe) {
+        selectedTab.classList.add('active');
+        selectedIframe.style.display = 'block';
+        currentTabId = tabId;
       }
     }
 
-    // Save the content of the iframe before switching tabs
-    contentFrame.onload = () => {
-      contentFrame.contentWindow.addEventListener('beforeunload', () => {
-        const activeTabId = document.querySelector('.tab.active').id;
-        if (activeTabId) {
-          tabContents[activeTabId] = contentFrame.contentWindow.document.body.innerHTML;
-        }
-      });
-    };
-
-    // Add one tab on page load for flair
+    // Auto-add one tab on load
     addTab();
   </script>
+
 </body>
 </html>
